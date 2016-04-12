@@ -45,7 +45,7 @@ class SequelProCommand extends TerminusCommand {
     // Check if OS is Mac
     $os = strtoupper(substr(PHP_OS, 0, 3));
     if ($os != 'DAR') {
-      $this->failure('Operating system not supported.');
+      $this->failure('Operating system is not supported.');
     }
 
     $site = $this->sites->get(
