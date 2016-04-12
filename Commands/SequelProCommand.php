@@ -33,7 +33,7 @@ class SequelProCommand extends TerminusCommand {
    * : Site to Use
    *
    * [--env=<env>]
-   * : Environment to clear
+   * : Environment
    *
    * ## EXAMPLES
    *  terminus site sequelpro --site=my-site --env=dev
