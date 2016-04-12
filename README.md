@@ -3,11 +3,11 @@
 Terminus Plugin to open any Pantheon site database using a SQL GUI client.
 
 ## Supported:
-   [HeidiSQL](http://www.heidisql.com/) (Windows)
+[HeidiSQL](http://www.heidisql.com/) (Windows)
 
-   [Sequel Pro](http://www.sequelpro.com/) (Mac)
+[Sequel Pro](http://www.sequelpro.com/) (Mac)
 
-   [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) (Mac, Linux and Windows)
+[MySQL Workbench](https://dev.mysql.com/downloads/workbench/) (Mac, Linux and Windows)
 
 ## Examples:
 `terminus site heidisql`
@@ -29,4 +29,4 @@ For help installing, see [Terminus's Wiki](https://github.com/pantheon-systems/t
 The plugin will automatically attempt to find the HeidiSQL executable within your `Program Files` directory.  If your version of HeidiSQL is installed in a non-standard location or you are using the portable version of HeidiSQL, ensure the full path to heidisql.exe (including the executable itself) is set in the `TERMINUS_PANCAKES_HEIDISQL_LOC` environment variable.
 
 ## Help:
-Run `terminus help site pancakes` for help.
+Run `terminus help site heidi|sequel|workbench` for help.
