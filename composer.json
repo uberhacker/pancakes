@@ -1,0 +1,9 @@
+{
+  "name": "uberhacker/pancakes",
+  "description": "Pancakes - A Terminus plugin to open any Pantheon site database using a SQL GUI client",
+  "homepage": "https://github.com/uberhacker/pancakes",
+  "license": "MIT",
+  "require": {
+    "php": ">=5.4"
+  }
+}
