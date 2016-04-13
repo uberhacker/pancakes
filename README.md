@@ -10,6 +10,7 @@ Terminus plugin to open any Pantheon site database using a SQL GUI client.
 [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) (Mac, Linux and Windows)
 
 **_Note: The latest version of MySQL Workbench for Mac (version 6.3.6) is not compatible with this plugin.
+
 Please download version 6.2.5 instead.  Click on the `Looking for previous GA versions?` link to locate._**
 
 ## Examples:
