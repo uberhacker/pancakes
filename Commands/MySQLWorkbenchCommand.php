@@ -68,7 +68,16 @@ class MySQLWorkbenchCommand extends TerminusCommand {
         $redirect = '> /dev/null 2> /dev/null &';
         break;
       case 'WIN':
-        $workbench_cmd = 'MySQLWorkbench -admin';
+        $workbench = getenv('TERMINUS_PANCAKES_MYSQLWORKBENCH_CMD');
+        if (!$workbench) {
+          $program_files = 'Program Files';
+          $arch = getenv('PROCESSOR_ARCHITECTURE');
+          if ($arch == 'x86') {
+            $program_files = 'Program Files (x86)';
+          }
+          $workbench = "C:\\{$program_files}\\MySQL\\Workbench\\MySQLWorkbench.exe";
+        }
+        $workbench_cmd = "\"$workbench\" -admin";
         $workbench_home = getenv('HOMEPATH') . '\\AppData\\Roaming\\MySQL\\Workbench\\';
         $redirect = '> NUL 2> NUL';
         break;
