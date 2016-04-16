@@ -60,14 +60,17 @@ class MySQLWorkbenchCommand extends TerminusCommand {
       case 'DAR':
         $workbench_cmd = '/Applications/MySQLWorkbench.app/Contents/MacOS/MySQLWorkbench --admin';
         $workbench_home = getenv('HOME') . '/Library/Application Support/MySQL/Workbench/';
+        $redirect = '> /dev/null 2> /dev/null &';
         break;
       case 'LIN';
         $workbench_cmd = 'mysql-workbench --admin';
         $workbench_home = getenv('HOME') . '/.mysql/workbench/';
+        $redirect = '> /dev/null 2> /dev/null &';
         break;
       case 'WIN':
         $workbench_cmd = 'MySQLWorkbench -admin';
         $workbench_home = getenv('HOMEPATH') . '\\AppData\\Roaming\\MySQL\\Workbench\\';
+        $redirect = '> NUL 2> NUL';
         break;
     }
 
@@ -83,7 +86,8 @@ class MySQLWorkbenchCommand extends TerminusCommand {
     $environment->wake();
 
     // Open in MySQL Workbench
-    $command = sprintf('%s %s', $workbench_cmd, $domain);
+    $command = sprintf('%s %s %s', $workbench_cmd, $domain, $redirect);
+    echo "$command\n";
     exec($command);
   }
 
@@ -114,7 +118,7 @@ class MySQLWorkbenchCommand extends TerminusCommand {
         <value type="string" key="sslCert"></value>
         <value type="string" key="sslCipher"></value>
         <value type="string" key="sslKey"></value>
-        <value type="int" key="useSSL">2</value>
+        <value type="int" key="useSSL">1</value>
         <value type="string" key="userName">{$ci['mysql_username']}</value>
       </value>
       <value type="string" key="name">{$ci['domain']}</value>
@@ -145,7 +149,6 @@ XML;
   private function writeXML($file, $xml, $domain) {
     $data = file_get_contents($file);
     if (!strpos($data, $domain)) {
-      $os = strtoupper(substr(PHP_OS, 0, 3));
       $lines = file($file);
       $last = sizeof($lines) - 1;
       unset($lines[$last]);
