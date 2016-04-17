@@ -45,15 +45,16 @@ class SequelProCommand extends TerminusCommand {
     // Check if OS is Mac
     $os = strtoupper(substr(PHP_OS, 0, 3));
     if ($os != 'DAR') {
-      $this->failure('Operating system is not supported.');
+      $this->failure('Operating system not supported.');
     }
 
     $site = $this->sites->get(
       $this->input()->siteName(array('args' => $assoc_args))
     );
 
-    $env_id   = $this->input()->env(array('args' => $assoc_args, 'site' => $site));
-    $environment = $site->environments->get($env_id);
+    $env = $this->input()->env(array('args' => $assoc_args, 'site' => $site));
+    $domain = $env . '-' . $site->get('name') . '.pantheon.io';
+    $environment = $site->environments->get($env);
     $connection_info = $environment->connectionInfo();
 
     $mysql_host = $connection_info['mysql_host'];
@@ -62,22 +63,27 @@ class SequelProCommand extends TerminusCommand {
     $mysql_port = $connection_info['mysql_port'];
     $mysql_database = $connection_info['mysql_database'];
 
+    $this->log()->info('Opening {domain} database in SequelPro', array('domain' => $domain));
+
     // Wake the Site
     $environment->wake();
 
-    $this->log()->info('Opening {site} database in SequelPro', array('site' => $site->get('name')));
-
-    $label = sprintf('%s [%s]', $site->get('name'), $env_id);
+    $label = sprintf('%s [%s]', $site->get('name'), $env);
     $openxml = $this->getOpenFile($label, $mysql_host, $mysql_port, $mysql_username, $mysql_password, $mysql_database);
 
     $tempfile = tempnam('/tmp', 'terminus-sequelpro') . '.spf';
 
-    $handle = fopen($tempfile, "w");
-    fwrite($handle, $openxml);
-    fclose($handle);
+    try {
+      $handle = fopen($tempfile, "w");
+      fwrite($handle, $openxml);
+      fclose($handle);
+    } catch (Exception $e) {
+      $this->failure($e->getMessage());
+    }
 
     // Open in SequelPro
     $command = sprintf('%s %s', 'open', $tempfile);
+    $this->log()->info($command);
     exec($command);
   }
 
