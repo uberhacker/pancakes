@@ -43,7 +43,7 @@ class HeidiSQLCommand extends TerminusCommand {
    */
   public function heidisql($args, $assoc_args) {
     // Check if OS is Windows
-    if (!\Terminus\Utils\isWindows()) {
+    if (!Utils\isWindows()) {
       $this->failure('Operating system is not supported.');
     }
 
@@ -51,20 +51,15 @@ class HeidiSQLCommand extends TerminusCommand {
       $this->input()->siteName(array('args' => $assoc_args))
     );
 
-    $env_id   = $this->input()->env(array('args' => $assoc_args, 'site' => $site));
-    $environment = $site->environments->get($env_id);
+    $env = $this->input()->env(array('args' => $assoc_args, 'site' => $site));
+    $domain = $env . '-' . $site->get('name') . '.pantheon.io';
+    $environment = $site->environments->get($env);
     $connection_info = $environment->connectionInfo();
 
-    $mysql_host = $connection_info['mysql_host'];
-    $mysql_username = $connection_info['mysql_username'];
-    $mysql_password = $connection_info['mysql_password'];
-    $mysql_port = $connection_info['mysql_port'];
-    $mysql_database = $connection_info['mysql_database'];
-
-    // Wake the Site
-    $environment->wake();
-
-    $this->log()->info('Opening {site} database in HeidiSQL', array('site' => $site->get('name')));
+    $mysql_host = escapeshellarg($connection_info['mysql_host']);
+    $mysql_username = escapeshellarg($connection_info['mysql_username']);
+    $mysql_password = escapeshellarg($connection_info['mysql_password']);
+    $mysql_port = escapeshellarg($connection_info['mysql_port']);
 
     $possible_heidi_locations = array(
       '\Program Files\HeidiSQL\heidisql.exe',
@@ -74,12 +69,12 @@ class HeidiSQLCommand extends TerminusCommand {
 
     foreach ($possible_heidi_locations as $phl) {
       if (file_exists($phl)) {
-        $phl = escapeshellarg($phl);
-        $mysql_host = escapeshellarg($mysql_host);
-        $mysql_port = escapeshellarg($mysql_port);
-        $mysql_username = escapeshellarg($mysql_username);
-        $mysql_password = escapeshellarg($mysql_password);
-        $command = sprintf('start /b "" %s -h=%s -P=%s -u=%s -p=%s', $phl, $mysql_host, $mysql_port, $mysql_username, $mysql_password);
+        $app = escapeshellarg($phl);
+        $this->log()->info('Opening {domain} database in {app}', array('domain' => $domain, 'app' => $app));
+        // Wake the Site
+        $environment->wake();
+        $command = sprintf('start /b "" %s -h=%s -P=%s -u=%s -p=%s', $app, $mysql_host, $mysql_port, $mysql_username, $mysql_password);
+        $this->log()->info($command);
         exec($command);
         break;
       }
