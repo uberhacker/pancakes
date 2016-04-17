@@ -18,8 +18,8 @@ class MySQLWorkbenchCommand extends TerminusCommand {
    */
   public function __construct(array $options = []) {
     $options['require_login'] = true;
-     parent::__construct($options);
-     $this->sites = new Sites();
+    parent::__construct($options);
+    $this->sites = new Sites();
   }
 
   /**
@@ -53,7 +53,7 @@ class MySQLWorkbenchCommand extends TerminusCommand {
     $connection_info['connection_id'] = substr(md5($domain . '.connection'), 0, 8) . '-' . $site->get('id');
     $connection_info['server_instance_id'] = substr(md5($domain . '.server'), 0, 8) . '-' . $site->get('id');
 
-    $this->log()->info('Opening {domain} database in MySQL Workbench', array('domain' => $domain));
+    $this->log()->info('Opening {domain} database in {app}', array('domain' => $domain, 'app' => $app));
 
     $os = strtoupper(substr(PHP_OS, 0, 3));
     switch ($os) {
@@ -61,12 +61,12 @@ class MySQLWorkbenchCommand extends TerminusCommand {
         $workbench_cmd = '/Applications/MySQLWorkbench.app/Contents/MacOS/MySQLWorkbench --admin';
         $workbench_home = getenv('HOME') . '/Library/Application Support/MySQL/Workbench/';
         $redirect = '> /dev/null 2> /dev/null &';
-        break;
+          break;
       case 'LIN';
         $workbench_cmd = 'mysql-workbench --admin';
         $workbench_home = getenv('HOME') . '/.mysql/workbench/';
         $redirect = '> /dev/null 2> /dev/null &';
-        break;
+          break;
       case 'WIN':
         $workbench = getenv('TERMINUS_PANCAKES_MYSQLWORKBENCH_LOC');
         if (!$workbench) {
@@ -80,7 +80,7 @@ class MySQLWorkbenchCommand extends TerminusCommand {
         $workbench_cmd = "start /b \"$workbench\" -admin";
         $workbench_home = getenv('HOMEPATH') . '\\AppData\\Roaming\\MySQL\\Workbench\\';
         $redirect = '';
-        break;
+          break;
     }
 
     $connections_xml = $this->getConnection($connection_info);
