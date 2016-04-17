@@ -50,8 +50,8 @@ class MySQLWorkbenchCommand extends TerminusCommand {
 
     $domain = $env . '-' . $site->get('name') . '.pantheon.io';
     $connection_info['domain'] = $domain;
-    $connection_info['connection_id'] = md5($domain . '.connection');
-    $connection_info['server_instance_id'] = md5($domain . '.server');
+    $connection_info['connection_id'] = substr(md5($domain . '.connection'), 0, 8) . '-' . $site->get('id');
+    $connection_info['server_instance_id'] = substr(md5($domain . '.server'), 0, 8) . '-' . $site->get('id');
 
     $this->log()->info('Opening {domain} database in MySQL Workbench', array('domain' => $domain));
 
@@ -68,7 +68,7 @@ class MySQLWorkbenchCommand extends TerminusCommand {
         $redirect = '> /dev/null 2> /dev/null &';
         break;
       case 'WIN':
-        $workbench = getenv('TERMINUS_PANCAKES_MYSQLWORKBENCH_CMD');
+        $workbench = getenv('TERMINUS_PANCAKES_MYSQLWORKBENCH_LOC');
         if (!$workbench) {
           $program_files = 'Program Files';
           $arch = getenv('PROCESSOR_ARCHITECTURE');
@@ -77,9 +77,9 @@ class MySQLWorkbenchCommand extends TerminusCommand {
           }
           $workbench = "C:\\{$program_files}\\MySQL\\Workbench\\MySQLWorkbench.exe";
         }
-        $workbench_cmd = "\"$workbench\" -admin";
+        $workbench_cmd = "start /b \"$workbench\" -admin";
         $workbench_home = getenv('HOMEPATH') . '\\AppData\\Roaming\\MySQL\\Workbench\\';
-        $redirect = '> NUL 2> NUL';
+        $redirect = '';
         break;
     }
 
@@ -96,7 +96,7 @@ class MySQLWorkbenchCommand extends TerminusCommand {
 
     // Open in MySQL Workbench
     $command = sprintf('%s %s %s', $workbench_cmd, $domain, $redirect);
-    echo "$command\n";
+    $this->log()->info($command);
     exec($command);
   }
 
