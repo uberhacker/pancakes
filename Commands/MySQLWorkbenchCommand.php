@@ -78,7 +78,7 @@ class MySQLWorkbenchCommand extends TerminusCommand {
           break;
       case 'LIN';
         if (!$workbench) {
-          $workbench = 'mysql-workbench';
+          $workbench = '/usr/bin/mysql-workbench';
         }
         $workbench_cmd = "$workbench --admin";
         $workbench_cfg = getenv('HOME') . '/.mysql/workbench/';
