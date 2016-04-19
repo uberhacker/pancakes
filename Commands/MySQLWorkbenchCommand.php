@@ -16,6 +16,7 @@ class MySQLWorkbenchCommand extends TerminusCommand {
    * @param array $options
    * @return MySQLWorkbenchCommand
    */
+
   public function __construct(array $options = []) {
     $options['require_login'] = true;
     parent::__construct($options);
@@ -48,23 +49,27 @@ class MySQLWorkbenchCommand extends TerminusCommand {
     $environment = $site->environments->get($env);
     $connection_info = $environment->connectionInfo();
 
+    // Additional connection information
     $domain = $env . '-' . $site->get('name') . '.pantheon.io';
     $connection_info['domain'] = $domain;
-    $connection_info['connection_id'] = substr(md5($domain . '.connection'), 0, 8) . '-' . $site->get('id');
-    $connection_info['server_instance_id'] = substr(md5($domain . '.server'), 0, 8) . '-' . $site->get('id');
+    $connection_info['connection_id'] = substr(md5($domain . '.connection'), 0, 8)
+                                          . '-' . $site->get('id');
+    $connection_info['server_instance_id'] = substr(md5($domain . '.server'), 0, 8)
+                                               . '-' . $site->get('id');
 
-    $this->log()->info('Opening {domain} database in {app}', array('domain' => $domain, 'app' => $app));
-
+    // Determine the command and configuration directory based on the operating system
     $os = strtoupper(substr(PHP_OS, 0, 3));
     switch ($os) {
       case 'DAR':
-        $workbench_cmd = '/Applications/MySQLWorkbench.app/Contents/MacOS/MySQLWorkbench --admin';
-        $workbench_home = getenv('HOME') . '/Library/Application Support/MySQL/Workbench/';
+        $workbench = '/Applications/MySQLWorkbench.app/Contents/MacOS/MySQLWorkbench';
+        $workbench_cmd = "$workbench --admin";
+        $workbench_cfg = getenv('HOME') . '/Library/Application Support/MySQL/Workbench/';
         $redirect = '> /dev/null 2> /dev/null &';
           break;
       case 'LIN';
-        $workbench_cmd = 'mysql-workbench --admin';
-        $workbench_home = getenv('HOME') . '/.mysql/workbench/';
+        $workbench = 'mysql-workbench';
+        $workbench_cmd = "$workbench --admin";
+        $workbench_cfg = getenv('HOME') . '/.mysql/workbench/';
         $redirect = '> /dev/null 2> /dev/null &';
           break;
       case 'WIN':
@@ -78,18 +83,27 @@ class MySQLWorkbenchCommand extends TerminusCommand {
           $workbench = "C:\\{$program_files}\\MySQL\\Workbench\\MySQLWorkbench.exe";
         }
         $workbench_cmd = "start /b \"$workbench\" -admin";
-        $workbench_home = getenv('HOMEPATH') . '\\AppData\\Roaming\\MySQL\\Workbench\\';
+        $workbench_cfg = getenv('HOMEPATH') . '\\AppData\\Roaming\\MySQL\\Workbench\\';
         $redirect = '';
           break;
+      default:
+        $this->failure('Operating system not supported.');
     }
 
-    $connections_xml = $this->getConnection($connection_info);
-    $connections_file = "{$workbench_home}connections.xml";
-    $this->writeXML($connections_file, $connections_xml, $domain);
+    $this->log()->info(
+      'Opening {domain} database in {app}',
+      array('domain' => $domain, 'app' => $workbench)
+    );
 
+    // Connections XML configuration file
+    $connections_xml = $this->getConnection($connection_info);
+    $connections_file = "{$workbench_cfg}connections.xml";
+    $this->writeXml($connections_file, $connections_xml, $domain);
+
+    // Server instances XML configuration file
     $server_instances_xml = $this->getServerInstance($connection_info);
-    $server_instances_file = "{$workbench_home}server_instances.xml";
-    $this->writeXML($server_instances_file, $server_instances_xml, $domain);
+    $server_instances_file = "{$workbench_cfg}server_instances.xml";
+    $this->writeXml($server_instances_file, $server_instances_xml, $domain);
 
     // Wake the Site
     $environment->wake();
@@ -97,11 +111,16 @@ class MySQLWorkbenchCommand extends TerminusCommand {
     // Open in MySQL Workbench
     $command = sprintf('%s %s %s', $workbench_cmd, $domain, $redirect);
     $this->log()->info($command);
-    exec($command);
+    if ($this->validCommand($workbench)) {
+      exec($command);
+    }
   }
 
   /**
    * Generate the XML for opening a connection in MySQL Workbench
+   *
+   * @param array $ci Connection information array
+   * @return string XML configuration file section
    */
   private function getConnection($ci) {
     return <<<XML
@@ -138,6 +157,9 @@ XML;
 
   /**
    * Generate the XML for opening a server instance in MySQL Workbench
+   *
+   * @param array $ci Connection information array
+   * @return string XML configuration file section
    */
   private function getServerInstance($ci) {
     return <<<XML
@@ -154,18 +176,21 @@ XML;
 
   /**
    * Write the XML to the configuration file
+   *
+   * @param string $file The full path to the configuration file
+   * @param string $xml The XML configuration file section contents
+   * @param string $domain The fully qualified domain of the Pantheon site
    */
-  private function writeXML($file, $xml, $domain) {
+  private function writeXml($file, $xml, $domain) {
     $data = file_get_contents($file);
     if (!strpos($data, $domain)) {
       $lines = file($file);
-      $last = sizeof($lines) - 1;
+      $last = count($lines) - 1;
       unset($lines[$last]);
-      if (sizeof($lines) == 3) {
+      if (count($lines) == 3) {
         $lines[2] = str_replace('/>', '>', $lines[2]);
-      }
-      else {
-        $last = sizeof($lines) - 1;
+      } else {
+        $last = count($lines) - 1;
         unset($lines[$last]);
       }
       $end = "\n  </value>\n</data>";
@@ -174,6 +199,27 @@ XML;
       fwrite($handle, $data);
       fclose($handle);
     }
+  }
+
+  /**
+   * Executable file validation
+   *
+   * @param string $file Full path to the executable file
+   * @return bool True or false based on the file execution status
+   */
+  private function validCommand($file = '') {
+    if (!$file) {
+      return false;
+    }
+    if (!file_exists($file)) {
+      $this->failure("$file does not exist.");
+      return false;
+    }
+    if (!is_executable($file)) {
+      $this->failure("$file is not executable.");
+      return false;
+    }
+    return true;
   }
 
 }
