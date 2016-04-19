@@ -66,21 +66,25 @@ class MySQLWorkbenchCommand extends TerminusCommand {
 
     // Determine the command and configuration directory based on the operating system
     $os = strtoupper(substr(PHP_OS, 0, 3));
+    $workbench = getenv('TERMINUS_PANCAKES_MYSQLWORKBENCH_LOC');
     switch ($os) {
       case 'DAR':
-        $workbench = '/Applications/MySQLWorkbench.app/Contents/MacOS/MySQLWorkbench';
+        if (!$workbench) {
+          $workbench = '/Applications/MySQLWorkbench.app/Contents/MacOS/MySQLWorkbench';
+        }
         $workbench_cmd = "$workbench --admin";
         $workbench_cfg = getenv('HOME') . '/Library/Application Support/MySQL/Workbench/';
         $redirect = '> /dev/null 2> /dev/null &';
           break;
       case 'LIN';
-        $workbench = 'mysql-workbench';
+        if (!$workbench) {
+          $workbench = 'mysql-workbench';
+        }
         $workbench_cmd = "$workbench --admin";
         $workbench_cfg = getenv('HOME') . '/.mysql/workbench/';
         $redirect = '> /dev/null 2> /dev/null &';
           break;
       case 'WIN':
-        $workbench = getenv('TERMINUS_PANCAKES_MYSQLWORKBENCH_LOC');
         if (!$workbench) {
           $program_files = 'Program Files';
           $arch = getenv('PROCESSOR_ARCHITECTURE');
