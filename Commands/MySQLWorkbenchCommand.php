@@ -1,4 +1,5 @@
 <?php
+
 namespace Terminus\Commands;
 
 use Terminus\Commands\TerminusCommand;
@@ -50,13 +51,12 @@ class MySQLWorkbenchCommand extends TerminusCommand {
     $connection_info = $environment->connectionInfo();
 
     // Additional connection information
+    $sftp_port = 2222;
     $domain = $env . '-' . $site->get('name') . '.pantheon.io';
     $connection_info['domain'] = $domain;
     $parts = explode(':', $connection_info['sftp_url']);
     if (isset($parts[2])) {
       $sftp_port = $parts[2];
-    } else {
-      $sftp_port = 2222;
     }
     $connection_info['sftp_port'] = $sftp_port;
     $connection_info['connection_id'] = substr(md5($domain . '.connection'), 0, 8)
@@ -86,15 +86,22 @@ class MySQLWorkbenchCommand extends TerminusCommand {
           break;
       case 'WIN':
         if (!$workbench) {
-          $program_files = 'Program Files';
-          $arch = getenv('PROCESSOR_ARCHITECTURE');
-          if ($arch == 'x86') {
-            $program_files = 'Program Files (x86)';
-          }
-          $workbench = "C:\\{$program_files}\\MySQL\\Workbench\\MySQLWorkbench.exe";
+	  $candidates = array(
+	    'C:\\\\Program Files\\\\MySQL\\\\MySQL Workbench 6.3 CE\\\\MySQLWorkbench.exe',
+	    'C:\\\\Program Files (x86)\\\\MySQL\\\\MySQL Workbench 6.3 CE\\\\MySQLWorkbench.exe',
+	  );
+	  foreach ($candidates as $candidate) {
+	    if (file_exists($candidate)) {
+	      $workbench = $candidate;
+	      break;
+	    }
+	  }
+	  if (!$workbench) {
+	    $this->failure('Unable to locate MySQLWorkbench.exe');
+	  }
         }
-        $workbench_cmd = "start /b \"$workbench\" -admin";
-        $workbench_cfg = getenv('HOMEPATH') . '\\AppData\\Roaming\\MySQL\\Workbench\\';
+        $workbench_cmd = "\"$workbench\" -admin";
+        $workbench_cfg = getenv('HOME') . '/AppData/Roaming/MySQL/Workbench/';
         $redirect = '';
           break;
       default:
