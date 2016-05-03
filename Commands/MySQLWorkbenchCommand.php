@@ -115,12 +115,12 @@ class MySQLWorkbenchCommand extends TerminusCommand {
 
     // Connections XML configuration file
     $connections_xml = $this->getConnection($connection_info);
-    $connections_file = "{$workbench_cfg}connections.xml";
+    $connections_file = "file://{$workbench_cfg}connections.xml";
     $this->writeXml($connections_file, $connections_xml, $domain);
 
     // Server instances XML configuration file
     $server_instances_xml = $this->getServerInstance($connection_info);
-    $server_instances_file = "{$workbench_cfg}server_instances.xml";
+    $server_instances_file = "file://{$workbench_cfg}server_instances.xml";
     $this->writeXml($server_instances_file, $server_instances_xml, $domain);
 
     // Wake the Site
